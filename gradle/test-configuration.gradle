@@ -1,0 +1,30 @@
+apply plugin: 'java'
+
+test {
+    def failedTest = []
+    afterTest { desc, result ->
+        logger.quiet "Executed test [${desc.className}]  ${desc.name} with result: ${result.resultType}"
+        if (result.resultType == TestResult.ResultType.FAILURE) {
+            def testDesc = "[${desc.className}] -> ${desc.name}"
+            failedTest << testDesc
+        }
+    }
+    afterSuite { desc, result ->
+        if (!desc.parent) {
+            println "\nTest result: ${result.resultType}"
+            println "Test summary: ${result.testCount} tests, " +
+                    "${result.successfulTestCount} succeeded, " +
+                    "${result.failedTestCount} failed, " +
+                    "${result.skippedTestCount} skipped"
+
+            if (result.failedTestCount > 0) {
+                println "Failed tests: "
+                failedTest.each {
+                    println "${it}"
+                }
+            }
+        }
+    }
+
+    finalizedBy jacocoTestReport, jacocoTestCoverageVerification
+}

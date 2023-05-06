@@ -1,0 +1,36 @@
+spring:
+  jpa:
+    show-sql: true
+  datasource:
+    url: jdbc:postgresql://localhost:5432/godel-kafka-course
+    username: postgres
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 5
+      validation-timeout: 500
+      connection-timeout: 2000
+      max-lifetime: 840000
+      keepalive-time: 30000
+      maximum-pool-size: 10
+      transaction-isolation: TRANSACTION_REPEATABLE_READ
+  liquibase:
+    enabled: true
+  kafka:
+    key: none
+    secret: none
+    bootstrap-servers: http://localhost:9092
+    listener:
+      concurrency: 2
+      log-container-config: true
+    properties:
+      schema.registry.url: http://localhost:8081
+    security:
+      kmsKeys: local/keys
+      protocol: PLAINTEXT
+
+
+features:
+  test-data-api.enabled: true
+
+godel-kafka-course.url: http://localhost:8080

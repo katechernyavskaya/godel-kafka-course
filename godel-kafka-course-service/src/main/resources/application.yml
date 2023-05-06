@@ -1,0 +1,292 @@
+spring:
+  profiles:
+    group:
+      dev: local,async,outbox
+  application:
+    name: entitlement-manager
+  main:
+    allow-bean-definition-overriding: true
+    allow-circular-references: true
+    banner-mode: off
+  flyway:
+    enabled: false
+  liquibase:
+    enabled: true
+    change-log: classpath:db.changelog/changelog-master.xml
+  jackson:
+    default-property-inclusion: non_null
+  kafka:
+    key: ${KAFKA_API_KEY}
+    secret: ${KAFKA_API_SECRET}
+    sasl.jaas.config: ${spring.kafka.properties.sasl.jaas.config}
+    sasl.mechanism: ${spring.kafka.properties.sasl.mechanism}
+    groupId: godel-kafka-course-group-feature
+    bootstrap-servers: http://localhost:9092 #!!!!!!------------
+    listener:
+      concurrency: 10
+      ack-mode: record
+    properties:
+      schema.registry.url: ${KAFKA_SCHEMA_REGISTRY_URL}
+      ssl.endpoint.identification.algorithm: https
+      sasl.mechanism: PLAIN
+      request.timeout.ms: 20000
+      retry.backoff.ms: 500
+      sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username='${spring.kafka.key}' password='${spring.kafka.secret}';
+    producer:
+      approval-command-topic: approval-command-v1
+
+      properties:
+        enable.idempotence: true
+      acks: all
+      retries: 20
+
+      client-topic: client-created-topic  #!!!!!-----------------
+      transaction-topic: transaction-created-topic #!!!!!-------------
+
+
+    consumer:
+      group-id: ${spring.kafka.groupId}
+
+
+
+
+
+      properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: com.tenx.entitlement.util.SpecificRecordSafeKafkaAvroDeserializer
+        specific.avro.reader: true
+        auto.offset.reset: earliest
+        partition.assignment.strategy: org.apache.kafka.clients.consumer.RoundRobinAssignor
+    security:
+      protocol: SASL_SSL
+      kmsKeys: ${SPRING_KAFKA_SECURITY_KMSKEYS}
+      region: eu-west-1
+      keysProviderClass: ${SPRING_KAFKA_SECURITY_KEYS_PROVIDER_CLASS:com.tenx.kafka.provider.CachingAwsKmsProvider}
+      providerExpirySeconds: 360
+      keysCache:
+        cacheMaxSize: 10
+        cacheMaxAgeSeconds: ${SPRING_KAFKA_SECURITY_CACHE_MAX_AGE_SECONDS:3600}
+        cacheMaxMessage: ${SPRING_KAFKA_SECURITY_CACHE_MAX_MESSAGE:1000}
+  datasource:
+    url: jdbc:postgresql://localhost:5432/godel-kafka-course
+    username: postgres
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      minimum-idle: 5
+      validation-timeout: 500
+      connection-timeout: 2000
+      max-lifetime: 840000
+      keepalive-time: 30000
+      maximum-pool-size: 10
+      transaction-isolation: TRANSACTION_REPEATABLE_READ
+server:
+  port: 8080
+  shutdown: graceful
+10xlogging:
+  suppressForSqlContaining:
+    - "scheduled_tasks"
+  inboundWebFilterIncluding:
+    - "^/v1/*"
+  maskPII: ${MASK_PII_ENABLED:true}
+
+management:
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.95
+  web:
+    client:
+      request:
+        autotime:
+          enabled: true
+          percentiles-histogram: true
+          percentiles: 0.95, 0.99
+
+  endpoints:
+    web:
+      base-path: "/"
+      path-mapping:
+        prometheus: "metrics"
+      exposure:
+        include: [ "health", "info", "prometheus", "metrics", "env",  "loggers"]
+
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: kafkaAuthProbe, db
+        readiness:
+          include: hostConnectProbe, db
+        echo:
+          include: ping
+    metrics:
+      enabled: true
+  health:
+    defaults:
+      enabled: true
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+
+  info:
+    git:
+      mode: full
+
+
+time-zone: "${TIME_ZONE:Europe/London}"
+
+tenx:
+  kafka:
+    consumers:
+      enabled: false
+  self.healing:
+      enabled: false
+      max.retries: 0
+  liveness:
+    kafka:
+      enabled: "${TENX_HEALTH_KAFKA_ENABLED:false}"
+      timeoutMs: "${TENX_HEALTH_KAFKA_AUTH_PROBE_TIMEOUT_MS:3000}"
+    datasource:
+      enabled: false
+  readiness:
+    connect:
+      enabled: "${TENX_HEALTH_CONNECT_ENABLED:false}"
+      endpoints:
+        - name: "Kafka"
+          endpoint: "${KAFKA_BOOTSTRAP_SERVERS}"
+          enabled: "${TENX_HEALTH_CONNECT_KAFKA_ENABLED:true}"
+      timeoutMs: "${TENX_HEALTH_CONNECT_PROBE_TIMEOUT_MS:500}"
+
+approval-expiry:
+  task:
+    enabled: false
+    cron: "0 */1 * ? * *" # every minute
+    retry-interval-ms: 100
+  default-ttl: 1440 #24h
+
+cache:
+  entitlement-config:
+    expiry-seconds: 600
+
+party-state-manager.url: http://partystatemanager.provisioning
+entitlement-manager.url: http://entitlementmanager.entitlement
+
+entitlement-config:
+  force-update: off
+
+search-approval-limits:
+  default: "50"
+  min: 1
+  max: 100
+
+search-user-limits:
+  default: "50"
+  min: 1
+  max: 100
+
+batch-evaluate:
+  max-batch-size: 100
+
+features:
+  test-data-api.enabled: false
+  approver-entitlements-check.enabled: true
+
+outbox:
+  table-name: outbox
+  topics: # listed in outbox profile
+  fixed-delay-ms: 0
+  thread-pool-size: 20
+  send-messages-timeout-ms: 30000
+  batch-size: 2500
+  reconciliation:
+    enabled: false
+    enabled-topics: client-approval-event-v001
+    heartbeat:
+      topic: client-message-reconciliation-interval-v001
+      interval: R/2022-11-17T08:00:00.000Z/PT5M
+      latencyMs: 2000
+      task-interval-ms: 10000
+      count-queries-timeout-ms: 15000
+      count-executor-thread-number: 3
+    interval-detail:
+      topic: client-message-reconciliation-detail-v001
+      max-page-size: 20
+      max-age-months: 6
+    replay:
+      max-messages:
+    async:
+      core-pool-size: 5
+      max-pool-size: 5
+      queue-capacity: 100
+  scheduled-metrics:
+    enabled: true
+    fixed-delay-ms: 14000
+    retry-interval-ms: 1000
+  scheduled-purge:
+    enabled: false
+    cronExpression: 0 0 0 * * ?
+    retryIntervalMs: 1000
+    maxCreatedDateAgeDays: 90
+    batchSize: 10000
+  encryption:
+    enabled: false
+    enabled-topics: client-approval-event-v001
+
+db-scheduler:
+  enabled: false
+  heartbeat-interval: PT30S
+  polling-interval: PT2S
+  polling-strategy: lock_and_fetch
+  failure-logger-level: ERROR
+  table-name: scheduled_tasks
+  immediate-execution-enabled: false
+  scheduler-name: db-scheduler
+  threads: 10
+  shutdown-max-wait: PT25S
+
+app:
+  kafka:
+    interceptor:
+      enable-external-topic-interceptor: true
+      external-topics: client-approval-event-v001,client-message-reconciliation-detail-v001,client-message-reconciliation-interval-v001,entitlement-evaluation-v1,entitlement-data-change-v1
+      producer:
+        producing-region: eu-west-1
+        producing-service-name: entitlementmanager
+        producing-checksum-algorithm: crc32
+
+global:
+  newRelic:
+    integrationViaChartEnabled: true
+
+10x-nr-custom-metrics:
+  enabled: ${NEW_RELIC_CUSTOM_METRICS_ENABLED:true}
+  metricWhitelist:
+    - app.outbox.pending.messages
+  nrApiKey: ${NEW_RELIC_LICENSE_KEY:}
+
+kafka:
+  dead-letter-processor-config:
+    dlt-to-replay-topic-mapping:
+      entitlement-manager-state-party-v2-dead-letter-queue: entitlement-manager-state-party-v2-replay
+      entitlement-manager-subscription-event-v4-dead-letter-queue: entitlement-manager-subscription-event-v4-replay
+      entitlement-manager-approval-command-v1-dead-letter-queue: entitlement-manager-approval-command-v1-replay
+      entitlement-manager-evaluate-command-v1-dead-letter-queue: entitlement-manager-evaluate-command-v1-replay
+
+http-client:
+  total-connection-pools: 50
+  connection-timeout: 1000ms
+  idle-timeout: 500ms
+
+retry:
+  maxAttempts: 5
+  initialInterval: 150ms
+  maxInterval: 5000ms

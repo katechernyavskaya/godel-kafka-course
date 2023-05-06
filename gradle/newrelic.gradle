@@ -1,0 +1,39 @@
+configurations {
+    newrelic
+    newrelicConfig
+}
+
+dependencies {
+    newrelic 'com.newrelic.agent.java:newrelic-agent:7.10.0'
+    newrelicConfig 'com.tenx:com.tenx.newrelic.config.10x-sandbox:0.1'
+}
+
+tasks.register('downloadNewrelicAgent') {
+    String nrDir = "${project.rootProject.projectDir}/newrelic"
+    new File(nrDir).mkdirs();
+    configurations.newrelic.resolve().each { file ->
+        copy {
+            from file
+            into nrDir
+            // strip versions
+            rename '(.+)-[\\.0-9]+\\.(.+)', '$1.$2'
+        }
+    }
+    configurations.newrelicConfig.resolve().each { file ->
+        copy {
+            from zipTree(file)
+            exclude 'META-INF/*'
+            exclude 'META-INF'
+            into nrDir
+        }
+    }
+}
+
+// Extend the test task that executes the component tests with the following....
+test {
+    if (project.hasProperty("newRelicEnabled")) {
+        jvmArgs(["-javaagent:${project.rootProject.projectDir}/newrelic/newrelic-agent.jar"])
+        environment "NEW_RELIC_APP_NAME", "${project.rootProject.name}"
+        environment "NEW_RELIC_CA_BUNDLE_PATH", "${project.rootProject.projectDir}/newrelic/certs/zscaler.pem"
+    }
+}
