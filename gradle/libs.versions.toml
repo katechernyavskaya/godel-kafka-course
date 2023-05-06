@@ -1,0 +1,21 @@
+# https://docs.gradle.org/current/userguide/platforms.html
+
+[versions]
+kotlin = "1.6.21"
+springboot = "2.7.0"
+jackson = "2.13.3"
+
+[libraries]
+jackson-databind = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jackson" }
+jackson-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson" }
+tenx-logging = { group = "com.tenx.logging", name = "standard-logging-spring-starter", version = "1.1.23" }
+
+[bundles]
+# Probably shouldn't be using this for jackson, as the spring dependency-management plugin
+# will resolve a version for jackson. But it's a demo of what's doable.
+jackson = ["jackson-databind", "jackson-kotlin"]
+
+[plugins]
+kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+springboot = { id = "org.springframework.boot", version.ref = "springboot" }
+sonarqube = { id = "org.sonarqube", version = "3.3" }

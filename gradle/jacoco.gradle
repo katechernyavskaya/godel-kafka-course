@@ -1,0 +1,35 @@
+apply plugin: 'jacoco'
+
+jacoco {
+    toolVersion = "0.8.6"
+}
+
+jacocoTestReport {
+    finalizedBy jacocoTestCoverageVerification
+    reports {
+        xml.required = true
+        csv.required = true
+        html.required = true
+        html.destination file("$rootDir/gradle/reports/jacoco/html")
+    }
+    afterEvaluate {
+        classDirectories.from = files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: project.ext.properties.jacocoVerificationExclude ? project.ext.jacocoVerificationExclude : [])
+        })
+    }
+}
+
+jacocoTestCoverageVerification {
+    afterEvaluate {
+        classDirectories.from = files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: project.ext.properties.jacocoVerificationExclude ? project.ext.jacocoVerificationExclude : [])
+        })
+    }
+    violationRules {
+        rule {
+            limit {
+                 minimum = 0.8
+            }
+        }
+    }
+}

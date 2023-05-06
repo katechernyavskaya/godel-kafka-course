@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <springProfile name="default,aurora">
+        <include resource="10xlogging-appender.xml"/>
+
+        <logger name="com.tenx.entitlement" level="INFO" additivity="false">
+            <appender-ref ref="10XSTANDARD"/>
+        </logger>
+
+        <logger name="com.tenx.customerneeds.shared.outbox.OutboxTaskConfig" level="WARN"  additivity="false">
+            <appender-ref ref="10XSTANDARD"/>
+        </logger>
+
+
+        <root level="WARN">
+            <appender-ref ref="10XSTANDARD"/>
+        </root>
+    </springProfile>
+    <springProfile name="local">
+        <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+        <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+        <logger name="com.tenx.entitlement" level="info" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+        <logger name="com.tenx.logging.logger.DatabaseLogger" level="OFF" additivity="false"/>
+        <logger name="com.tenx.customerneeds.shared.outbox.OutboxTaskConfig" level="WARN"  additivity="false">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+</configuration>

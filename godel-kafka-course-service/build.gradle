@@ -1,0 +1,119 @@
+plugins {
+    id 'application'
+    id "java-test-fixtures"
+    id 'com.tenx.plugin.10x-infer-wrapper' version '0.1.11'
+    id 'com.gorylenko.gradle-git-properties' version '2.4.1'
+    id "org.springframework.boot" version "2.7.10"
+    id "tenx.avro" version '0.6-SNAPSHOT'
+}
+
+apply plugin: 'com.tenx.plugin.10x-infer-wrapper'
+apply plugin: 'idea'
+apply plugin: 'application'
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply from: "${rootDir}/gradle/newrelic.gradle"
+
+
+compileJava {
+    options.compilerArgs += "-Amapstruct.defaultComponentModel=spring"
+    options.compilerArgs += "-Amapstruct.unmappedTargetPolicy=ERROR"
+}
+
+jar {
+    enabled = true
+}
+
+bootJar {
+    archiveFileName = 'godel-kafka-course.jar'
+    mainClass = 'com.godel.kafka.course.Application'
+}
+
+bootRun {
+    systemProperties System.properties
+}
+
+apply from: "https://nexus.internal.10x.mylti3gh7p4x.net/repository/maven-releases/com/tenx/security/security-plugins/0.1.24/security-plugins-0.1.24.gradle"
+
+dependencies {
+
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation('org.springframework.boot:spring-boot-starter-validation')
+    implementation("com.tenx.http.error.response:10x-http-error-response")
+    implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
+    implementation("com.tenx.lib:lib-health-probes") {
+        transitive = false
+    }
+    implementation("com.tenx.logging:standard-logging-spring-starter")
+    implementation("org.springdoc:springdoc-openapi-ui")
+    implementation('org.springdoc:springdoc-openapi-data-rest')
+    implementation("org.slf4j:log4j-over-slf4j")
+    implementation("org.liquibase:liquibase-core")
+    implementation("org.postgresql:postgresql")
+    implementation("com.tenx.data:hikari-iam-datasource")
+    implementation("com.tenx:10x-nr-custom-metrics")
+    implementation("com.vladmihalcea:hibernate-types-52")
+    implementation("com.tenx:standard-idempotency")
+    implementation("com.auth0:java-jwt")
+    implementation("com.tenx.customerneeds:shared-jwt")
+    implementation("com.tenx:10x-tracing")
+    implementation("com.newrelic.agent.java:newrelic-api")
+    // kafka, confluent & avro dependencies
+    implementation("io.confluent:kafka-avro-serializer")
+    implementation("org.apache.avro:avro")
+    implementation("com.tenx.kafka:10x-kafka-security")
+    implementation("com.tenx:logical-types")
+    implementation('com.tenx.customerneeds:shared-outbox'){
+        exclude group: 'com.fasterxml.jackson.module', module: 'jackson-module-scala_2.12'
+        exclude group: 'org.apache.kafka', module: 'kafka_2.12'
+    }
+    implementation('com.tenx.customerneeds:shared-kafka-interceptor')
+
+    implementation('com.tenxbanking:dead-letter-processor'){
+        exclude group: 'com.fasterxml.jackson.module', module: 'jackson-module-scala_2.12'
+        exclude group: 'org.apache.kafka', module: 'kafka_2.12'
+    }
+    implementation("org.springframework.kafka:spring-kafka") {
+        exclude group: 'org.springframework', module: 'spring-test'
+    }
+
+    implementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation("com.squareup.okhttp3:okhttp")
+    implementation("io.github.openfeign:feign-okhttp")
+    // cache
+    implementation("com.github.ben-manes.caffeine:caffeine")
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+
+    compileOnly ('org.mapstruct:mapstruct')
+    compileOnly("org.projectlombok:lombok")
+    compileOnly("org.hibernate:hibernate-jpamodelgen")
+
+    annotationProcessor("org.projectlombok:lombok")
+    annotationProcessor('org.mapstruct:mapstruct-processor')
+    annotationProcessor("org.hibernate:hibernate-jpamodelgen")
+    annotationProcessor('org.springframework.boot:spring-boot-configuration-processor')
+
+    testImplementation("org.assertj:assertj-core")
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine")
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
+    testImplementation("org.mockito:mockito-junit-jupiter")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation('org.springframework.kafka:spring-kafka-test') {
+        exclude group: 'org.springframework', module: 'spring-test'
+    }
+    testImplementation('org.assertj:assertj-core')
+
+    testFixturesCompileOnly("org.springframework.boot:spring-boot-starter-data-jpa")
+    testFixturesCompileOnly("javax.persistence:javax.persistence-api")
+    testFixturesCompileOnly("com.fasterxml.jackson.core:jackson-core")
+    testFixturesCompileOnly("com.fasterxml.jackson.core:jackson-annotations")
+    testFixturesCompileOnly("com.fasterxml.jackson.core:jackson-databind")
+    testFixturesCompileOnly("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    testFixturesCompileOnly("com.tenx:logical-types")
+    testFixturesCompileOnly("org.junit.jupiter:junit-jupiter-api")
+
+
+}

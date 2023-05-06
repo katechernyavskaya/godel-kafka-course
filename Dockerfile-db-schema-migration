@@ -1,0 +1,7 @@
+ARG TAG
+FROM local/gradle-cache:$TAG AS build
+FROM 786796192785.dkr.ecr.eu-west-1.amazonaws.com/10x/liquibase-db-schema-migration-base:4.5.0
+
+COPY --from=build /src/godel-kafka-course-service/src/main/resources/db/ /liquibase/changelog/db
+
+ENV changeLogClasspath=db/changelog/changelog-master.xml

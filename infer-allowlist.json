@@ -1,0 +1,17 @@
+[
+  {
+    "issueType": "INTERFACE_NOT_THREAD_SAFE",
+    "safetyCause": "org.slf4j.Logger",
+    "reason": "All SLF4J implementations on project are thread-safe."
+  },
+  {
+    "issueType": "INTERFACE_NOT_THREAD_SAFE",
+    "safetyCause": "javax.validation.Validator",
+    "reason": "Validator should be thread-safe."
+  },
+  {
+    "issueType": "INTERFACE_NOT_THREAD_SAFE",
+    "safetyCause": "org.apache.commons.logging.Log",
+    "reason": "All apace Log implementations on project are thread-safe."
+  }
+]

@@ -1,0 +1,12 @@
+.gradle/
+.idea/
+build/
+/out/
+*.iml
+godel-kafka-course-service/bin/
+.vscode/
+gradle/reports
+*.DS_Store
+**/outbox-changelog-master.xml
+**/cve-suppression.xml
+newrelic/

@@ -1,0 +1,13 @@
+apply plugin: 'checkstyle'
+
+checkstyle {
+    configDirectory = rootProject.file("gradle/config/checkstyle")
+    toolVersion = '10.2'
+}
+
+tasks.withType(Checkstyle) {
+    reports {
+        xml.required.set(false)
+        html.required.set(true)
+    }
+}
